@@ -5,16 +5,29 @@
     "siteName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the web app that you wish to create."
+        "description": "The name of the first web app that you wish to create."
+      }
+    },
+    "siteName2": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the second web app that you wish to create."
       }
     },
     "appServicePlan": {
-      "defaultValue": "/subscriptions/4bd9f9c7-6024-4dbf-814e-6f7cf170e602/resourceGroups/AppServicePlan_rg/providers/Microsoft.Web/serverfarms/AppServicePlan1",
+      "defaultValue": "AppServicePlan1",
       "type": "string",
       "metadata": {
-        "description": "Create this string on resources.azure.com."
+        "description": "The name of the existing App Service Plan"
       }
     },
+	"appServicePlanResourceGroupName" : {
+      "defaultValue": "AppServicePlan_rg",
+      "type": "string",
+      "metadata": {
+        "description": "The existing Resource Group of the App Service Plan."
+      }
+	},
     "storageAccount": {
       "type": "string",
       "metadata": {
@@ -364,8 +377,7 @@
       "metadata": {
         "description": "Describes the performance level of the first database for Edition"
       }
-    }
-  },
+    },
     "requestedServiceObjectiveName2": {
       "type": "string",
       "defaultValue": "Basic",
@@ -464,26 +476,26 @@
       }
     },
     {
-          "type": "Microsoft.Web/sites",
-          "name": "[parameters('siteName')]",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('siteName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
           ],
-          "apiVersion": "2015-08-01",
-          "properties": {
-            "serverFarmId": "[parameters('appServicePlan')]"
+      "apiVersion": "2015-08-01",
+      "properties": {
+        "serverFarmId": "[resourceId(parameters('appServicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('appServicePlan'))]"
           },
-          "resources": [
-            {
-              "apiVersion": "2015-08-01",
-              "type": "config",
-              "name": "connectionstrings",
-              "dependsOn": [
+      "resources": [
+          {
+          "apiVersion": "2015-08-01",
+          "type": "config",
+          "name": "connectionstrings",
+          "dependsOn": [
                 "[concat('Microsoft.Web/Sites/', parameters('siteName'))]",
 				"[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
               ],
-              "properties": {
+          "properties": {
 				"TeamContext": {
 					"value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
 					"type": "SQLServer"
@@ -491,15 +503,56 @@
 			  }
             },
             {
-              "apiVersion": "2015-08-01",
-              "type": "config",
-              "name": "appsettings",
-              "dependsOn": [
-                "[concat('Microsoft.Web/Sites/', parameters('siteName'))]",
-                "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
+          "apiVersion": "2015-08-01",
+          "type": "config",
+          "name": "appsettings",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]",
+            "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
               ],
-              "properties": {
-                "CacheConnection": "[concat(parameters('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', parameters('cacheName')), '2015-08-01').primaryKey)]"
+          "properties": {
+            "CacheConnection": "[concat(parameters('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', parameters('cacheName')), '2015-08-01').primaryKey)]"
+              }
+            }
+          ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('siteName2')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
+          ],
+      "apiVersion": "2015-08-01",
+      "properties": {
+        "serverFarmId": "[resourceId(parameters('appServicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('appServicePlan'))]"
+          },
+      "resources": [
+          {
+          "apiVersion": "2015-08-01",
+          "type": "config",
+          "name": "connectionstrings",
+          "dependsOn": [
+				"[concat('Microsoft.Web/Sites/', parameters('siteName2'))]",
+				"[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
+              ],
+          "properties": {
+				"TeamContext": {
+					"value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName2'), ';User Id=', parameters('administratorLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+					"type": "SQLServer"
+                }
+			  }
+            },
+            {
+          "apiVersion": "2015-08-01",
+          "type": "config",
+          "name": "appsettings",
+          "dependsOn": [
+            "[concat('Microsoft.Web/Sites/', parameters('siteName2'))]",
+            "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
+              ],
+          "properties": {
+            "CacheConnection": "[concat(parameters('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', parameters('cacheName')), '2015-08-01').primaryKey)]"
               }
             }
           ]

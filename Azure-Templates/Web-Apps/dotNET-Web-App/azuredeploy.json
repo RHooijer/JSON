@@ -22,74 +22,6 @@
         "description": "The existing Resource Group of the App Service Plan."
       }
 	},
-    "storageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "The storage account name"
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS",
-        "Premium_LRS"
-      ],
-      "metadata": {
-        "description": "The type of the storage account created"
-      },
-      "defaultValue": "Standard_LRS"
-    },
-    "cacheName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the new Azure Redis Cache."
-      }
-    },
-    "cacheSKUName": {
-      "type": "string",
-      "allowedValues": [
-        "Basic",
-        "Standard"
-      ],
-      "defaultValue": "Basic",
-      "metadata": {
-        "description": "The pricing tier of the new Azure Redis Cache."
-      }
-    },
-    "cacheSKUFamily": {
-      "type": "string",
-      "allowedValues": [
-        "C"
-      ],
-      "defaultValue": "C",
-      "metadata": {
-        "description": "The family for the SKU of the new Azure Redis Cache."
-      }
-    },
-    "cacheSKUCapacity": {
-      "type": "int",
-      "allowedValues": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6
-      ],
-      "defaultValue": 0,
-      "metadata": {
-        "description": "The size of the new Azure Redis Cache. "
-      }
-    },
-    "serviceBusNamespaceName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Service Bus namespace"
-      }
-    },
     "administratorLogin": {
       "type": "string",
       "metadata": {
@@ -250,8 +182,6 @@
     }
   },
   "variables": {
-    "defaultSASKeyName": "RootManageSharedAccessKey",
-    "authRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]"
   },
   "resources": [
     {
@@ -301,23 +231,9 @@
       ]
     },
     {
-      "apiVersion": "2015-08-01",
-      "name": "[parameters('serviceBusNamespaceName')]",
-      "type": "Microsoft.ServiceBus/Namespaces",
-      "location": "[resourceGroup().location]",
-      "kind": "Messaging",
-      "sku": {
-        "name": "StandardSku",
-        "tier": "Standard"
-      }
-    },
-    {
           "type": "Microsoft.Web/sites",
           "name": "[parameters('siteName')]",
           "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
-          ],
           "apiVersion": "2015-08-01",
           "properties": {
             "serverFarmId": "[resourceId(parameters('appServicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('appServicePlan'))]"
@@ -337,46 +253,8 @@
 					"type": "SQLServer"
                 }
 			  }
-            },
-            {
-              "apiVersion": "2015-08-01",
-              "type": "config",
-              "name": "appsettings",
-              "dependsOn": [
-                "[concat('Microsoft.Web/Sites/', parameters('siteName'))]",
-                "[concat('Microsoft.Cache/Redis/', parameters('cacheName'))]"
-              ],
-              "properties": {
-                "CacheConnection": "[concat(parameters('cacheName'),'.redis.cache.windows.net,abortConnect=false,ssl=true,password=', listKeys(resourceId('Microsoft.Cache/Redis', parameters('cacheName')), '2015-08-01').primaryKey)]"
-              }
             }
           ]
-    },
-    {
-          "name": "[parameters('cacheName')]",
-          "type": "Microsoft.Cache/Redis",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-08-01",
-          "dependsOn": [ ],
-          "tags": {
-            "displayName": "cache"
-          },
-          "properties": {
-            "sku": {
-              "name": "[parameters('cacheSKUName')]",
-              "family": "[parameters('cacheSKUFamily')]",
-              "capacity": "[parameters('cacheSKUCapacity')]"
-            }
-          }
-    },
-    {
-          "type": "Microsoft.Storage/storageAccounts",
-          "name": "[parameters('storageAccount')]",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "2015-05-01-preview",
-          "properties": {
-            "accountType": "[parameters('storageAccountType')]"
-          }
     }
   ]
 }

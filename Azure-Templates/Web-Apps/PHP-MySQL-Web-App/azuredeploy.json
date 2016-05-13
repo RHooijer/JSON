@@ -1,0 +1,83 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the web app that you wish to create."
+      }
+    },
+    "appServicePlan": {
+      "defaultValue": "AppServicePlan1",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the existing App Service Plan"
+      }
+    },
+	"appServicePlanResourceGroupName" : {
+      "defaultValue": "AppServicePlan_rg",
+      "type": "string",
+      "metadata": {
+        "description": "The existing Resource Group of the App Service Plan."
+      }
+	},
+    "mySQLDBname": {
+        "type": "string",
+    	"metadata": {
+    		"description": "Name of the ClearDB Database"
+        }
+    },
+    "mySQLDBplan": {
+        "defaultValue": "Free",
+        "type": "string",
+      	"allowedValues": [
+       		"Free",
+       		"Jupiter",
+       		"Saturn",
+       		"Venus"
+    		],
+    	"metadata": {
+       		"description": "Plan of the ClearDB Database"
+    	}
+    },
+    "mySQLDBregion": {
+        "defaultValue": "West Europe",
+        "type": "string",
+    	"metadata": {
+       		"description": "Region of the ClearDB Database"
+    	}
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+        "type": "Microsoft.Web/sites",
+        "name": "[parameters('siteName')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2015-08-01",
+        "properties": {
+          "serverFarmId": "[resourceId(parameters('appServicePlanResourceGroupName'), 'Microsoft.Web/serverfarms', parameters('appServicePlan'))]"
+        }
+	},
+    {
+        "type": "SuccessBricks.ClearDB/databases",
+        "name": "[parameters('mySQLDBname')]",
+        "apiVersion": "2014-04-01",
+        "location": "[parameters('mySQLDBregion')]",
+        "plan": {
+            "name": "[parameters('mySQLDBplan')]"
+        },
+        "properties": {
+            "name": "[parameters('mySQLDBname')]",
+            "status": {
+                "name": "Healthy",
+                "message": "Database is healthy and ready for use.",
+                "level": "Info"
+            }
+        }
+    }
+
+  ]
+}
