@@ -22,9 +22,9 @@ Creates the following resources:
 - Resource Group
 - Storage Account
 - Redis Cache
-- 2x Web App
+- **2x** Web App
 - SQL Server
-- 2x SQL Database
+- **2x** SQL Database
 - Service Bus
 
 ## dotNET-Web-App
